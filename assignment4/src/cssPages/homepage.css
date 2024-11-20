@@ -1,0 +1,67 @@
+.contents{
+  margin-left: 10%;
+  font-size: 100%;
+  transition: margin-left 0.3s ease;
+  
+}
+
+
+#subtitle{
+  font-weight: bold;
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.contents li{
+  list-style-type: none;
+  position: relative;
+}
+
+.circleList {
+    position: relative;
+    padding-left: 20px;
+    margin-left: 4%;
+}
+
+.circleList::before {
+    content: ''; /* making a space to put something */
+    position: absolute;
+    left: 0;
+    top: 50%; /* dot middle arrangement */
+    transform: translateY(-50%); /* Y axis middle arrangement */
+    width: 3px; 
+    height: 3px; 
+    border: 1px solid black; 
+    border-radius: 50%; 
+} 
+
+.discList {
+  position: relative;
+  padding-left: 20px; 
+}
+
+.discList::before {
+  content: '';  
+  position: absolute;
+  left: 0;
+  top: 50%; 
+  transform: translateY(-50%); 
+  width: 4px; 
+  height: 4px; 
+  border-radius: 50%; 
+  background-color: black;
+} 
+
+.contexts p {
+  margin-left: 7%;
+  margin-bottom: 1.5%;
+}
+
+#moreIndent{
+  margin-left: 8.5%;
+}
+
+#noIndent p{
+  margin-left: 5.5%;
+  margin-bottom: 1.5%;
+}
