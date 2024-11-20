@@ -8,6 +8,7 @@ import FacilityList from "./facilityList";
 import Reservation from './reservation';
 import Userinfo from './userInfo';
 import ReservationHistory from './reservationHistory'; 
+import Signin from './signin';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/reservation" element={<Reservation />} />
         <Route path="/userInfo" element={<Userinfo />} />
         <Route path="/reservationHistory" element={<ReservationHistory />} />
+        <Route path="/signin" element={<Signin />} />
         
       </Routes>
 

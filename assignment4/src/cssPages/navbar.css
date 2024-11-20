@@ -1,9 +1,9 @@
 nav{
   background-color: black;
   position: fixed;
-  margin-left: 10%;
+  margin-left: 0;
   margin-bottom: 0px;
-  width: 80%;
+  width: 100%;
   top: 0;
   z-index: 999;
 }
@@ -41,6 +41,14 @@ justify-content: center;
 width: 50%;
 }
 
+.special-menu{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+}
+
 .center-menu p{
 color: white;
 }
@@ -49,7 +57,13 @@ color: white;
 margin-left: 0%;
 transition: margin-left 0.3s ease;
 }
-.profile-button{
+
+.signin{
+  background-color: transparent;
+  border: 1px solid white;
+}
+
+.signin-button{
 margin-right: 2%;
 }
 
