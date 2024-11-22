@@ -59,20 +59,29 @@ transition: margin-left 0.3s ease;
 }
 
 .signin{
+  margin: 5px 0;
   background-color: transparent;
   border: 1px solid white;
 }
 
-.signin-button{
-margin-right: 2%;
+.navbar-profile-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-top: 15px;
+}
+
+.signin-nav{
+  margin-right: 2%;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
 }
 
 /*------------------------------------------------------------------*/
 /*------------------------------------------------------------------*/
 
-.hideOnMobile{
-display: block;
-}
 
 .menu-button{
 display: none;

@@ -1,24 +1,22 @@
 import React from "react";
 import '../cssPages/navbar.css'
-import { Link, useLocation } from "react-router-dom";
+import {Link} from "react-router-dom";
 
-function Navbar(){
-  const location = useLocation();
-  const isSpecialPage = location.pathname === "/signin";
+function Navbar({profileImage}){
 
   return(
     <nav>
       {/* Changed all <a href=> to <Link> */}
-        <ul className={`${isSpecialPage ? "special-menu" : ""}`}>
-          {!isSpecialPage && (
-            <li className="home-button">
-              <Link to="/homepage">
-                <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" width="35" fill="#5f6368">
-                  <path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" />
-                </svg>
-              </Link>
-            </li>
-          )}
+        <ul>
+          
+          <li className="home-button">
+            <Link to="/homepage">
+              <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" width="35" fill="#5f6368">
+                <path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" />
+              </svg>
+            </Link>
+          </li>
+          
 
           {/* codes for Facility List, Reservation, User menus on nav bar */}
           <div className="center-menu">
@@ -47,23 +45,23 @@ function Navbar(){
           </div>
 
           {/* Hamburger menu button appears */}
-          {!isSpecialPage && (
-            <li className="menu-button" onClick={showHamburger}>
-              <Link to = "#">
-                <svg xmlns="http://www.w3.org/2000/svg" height="26" viewBox="0 -960 960 960" width="26" fill="#5f6368">
-                  <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
-                </svg>
-              </Link>
-            </li>
-          )}
+          
+          <li className="menu-button" onClick={showHamburger}>
+            <Link to = "#">
+              <svg xmlns="http://www.w3.org/2000/svg" height="26" viewBox="0 -960 960 960" width="26" fill="#5f6368">
+                <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+              </svg>
+            </Link>
+          </li>
+          
 
-          {!isSpecialPage && (
-            <li className="signin-button hideOnMobile">
-              <Link to = "signin">
-                <button className="signin">Sign in</button>
-              </Link>
-            </li> 
-          )}
+          
+          <li className="signin-nav hideOnMobile">
+            <img src={profileImage} alt="Profile" className="navbar-profile-image" />
+            <Link to = "signin">
+              <button className="signin">Sign in</button>
+            </Link>
+          </li> 
         </ul>
 
         {/* hamburger menu details */}

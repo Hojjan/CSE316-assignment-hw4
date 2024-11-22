@@ -9,6 +9,7 @@ import Reservation from './reservation';
 import Userinfo from './userInfo';
 import ReservationHistory from './reservationHistory'; 
 import Signin from './signin';
+import Signup from './signup';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/userInfo" element={<Userinfo />} />
         <Route path="/reservationHistory" element={<ReservationHistory />} />
         <Route path="/signin" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} />
         
       </Routes>
 

@@ -1,5 +1,6 @@
 import React, {useState, useRef, useEffect} from "react";
 import '../cssPages/userInfo.css'
+import Navbar from "./navbar";
 
 function Userinfo(){
     const [pop, setPop] = useState(false); /* Set popUps closed as default */
@@ -7,6 +8,16 @@ function Userinfo(){
     const [popContent, setPopContent] = useState(null);
     const overlayRef = useRef(null);
     const [activeButton, setActiveButton] = useState(null);
+    const [profileImage, setProfileImage] = useState("./user.png");
+
+    React.useEffect(() => {
+        // 페이지에 들어올 때 배경 변경
+        document.body.classList.add('page-white-bg');
+        return () => {
+            // 페이지를 떠날 때 원래 배경 복원
+            document.body.classList.remove('page-white-bg');
+        };
+    }, []);
 
     useEffect(() => {
         if (overlayRef.current) {
@@ -50,10 +61,21 @@ function Userinfo(){
         setPopContent(
             <div>
                 <p>New Image</p>
-                <input type="file" id="newImage" />
+                <input type="file" id="newImage" accept="image/*" onChange={handleImageUpload}/>
             </div>
         );
         setPop(true);
+    };
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setProfileImage(reader.result); // Set the uploaded image as the profile picture
+            };
+            reader.readAsDataURL(file); // Read the uploaded file as a Data URL
+        }
     };
 
     /* Close Pop Up */
@@ -70,11 +92,14 @@ function Userinfo(){
 
     return(
         <div className="wholeUserInfo">
+
+            <Navbar profileImage={profileImage} />
+
             <div>
                 <h1>User Information</h1>
             </div>
             <div class="profileImage">
-                <img src="./user.png" alt="profile" width="150" />  
+                <img src={profileImage} alt="profile" className="circle-image" />  
             </div>
             <div>
                 <button id="change-image" onClick={ImagePopup} style={buttonStyle("image")}>Change Image</button>
@@ -97,14 +122,32 @@ function Userinfo(){
                 <div>
                     {/* Darker background when Pop Up */}
                     <div id="overlay" className="overlay" ref={overlayRef}></div>
-                    <div className="popup">
+                    <div className={`popup ${activeButton === "image" ? "image-popup" : ""}`}>
                         <div className="popup-inner">
                             <h3>{popTitle}</h3>
-                            <div className="popup-content">{popContent}</div>
-                            <div className="popUpButtons">
-                                <button id="closeBtn" onClick={closePopup}>Close</button>
-                                <button id="saveBtn">Save changes</button>
-                            </div>
+                            
+                            {activeButton === "image" ? (
+                            <>
+                                <div className="popup-content">
+                                    {popContent}
+                                    <button id="uploadBtn"  onClick={() => alert("Image uploaded!")}>Upload Image</button>
+                                </div>
+                                <div className="popUpButtons">
+                                    <button id="closeBtn"  onClick={closePopup}>Close</button>
+                                </div>
+                            </>
+                            ) : (
+                            <>
+                                <div className="popup-content">
+                                    {popContent}
+                                </div>
+                                <div className="popUpButtons">
+                                    <button id="closeBtn"  onClick={closePopup}>Close</button>
+                                    <button id="saveBtn"  onClick={() => alert("Changes saved!")}>Save changes</button>
+                                </div>
+                            </>
+                            )}
+
                         </div>
                     </div>
                 </div>

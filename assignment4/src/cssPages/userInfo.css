@@ -1,5 +1,3 @@
-
-
 .wholeUserInfo{
     justify-content: center;
     align-items: center;
@@ -9,7 +7,14 @@
 }
 
 .change p {
-    margin-bottom: 15px;
+    margin-bottom: 30px;
+}
+
+.circle-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%; /* Make the image circular */
+    object-fit: cover; /* Ensure the image scales properly */
 }
 
 #change-image {
@@ -63,6 +68,11 @@
     border-radius: 5px;
 }
 
+.image-popup{
+    width: 500px;
+    height: 260px;
+}
+
 .popup-inner h3{
     text-align: left;
     padding-left: 15px;
@@ -85,6 +95,7 @@
 
 button{
     cursor: pointer;
+    margin-bottom: 10px;
 }
 
 input {
@@ -107,6 +118,11 @@ input {
     gap: 10px;
 }
 
+.image-popup #closeBtn{
+    background-color: #6e6e6e;
+    color: white;
+}
+
 #closeBtn {
     background-color: #e0e0e0;
     color: #333;
@@ -118,6 +134,11 @@ input {
     width: 100px;
     background-color: #007bff;
     color: white;
+}
+
+#uploadBtn{
+    width: 100px;
+    height: 32px;
 }
 
 .overlay {

@@ -37,7 +37,7 @@ app.get('/api/facilities', (req, res) => {
   });
 });
 
-// 데이터 조회 API for reservations table
+// 데이터 조회 API for reservation table
 app.get('/api/reservation', (req, res) => {
   const query = 'SELECT * FROM cse316hw.reservation';
 
@@ -128,7 +128,43 @@ app.delete('/api/reservation/:id', (req, res) => {
   });
 });
 
+// 회원가입 처리
+app.post("/api/user", (req, res) => {
+  console.log("Request body: ", req.body);
+  const { email, password, username } = req.body;
+  
+
+  // 이메일 중복 확인
+  const checkEmailQuery = "SELECT * FROM user WHERE email_address = ?";
+  db.query(checkEmailQuery, [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ err: "Database error during email check." });
+    }
+
+    if (results.length > 0) {
+      return res.status(400).json({ error: "Email already exists." });
+    }
+
+    // 사용자 추가
+    const insertUserQuery = "INSERT INTO user (email_address, password, username) VALUES (?, ?, ?)";
+    db.query(insertUserQuery, [email, password, username], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error during user insertion." });
+      }
+
+      res.status(201).json({ message: "User registered successfully!" });
+
+
+
+
+
+    });
+  });
+});
+
 // 서버 시작
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+
