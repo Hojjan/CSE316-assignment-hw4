@@ -94,7 +94,7 @@ function Reservation(){
       }
 
       // Checking only for SUNY or Not
-      if (slctedFacData.suny_flag === true && suny === 'Non-SUNY') {
+      if (slctedFacData.suny_flag === 'True' && suny === 'Non-SUNY') {
         alert(`This facility is available only for SUNY Korea members.`);
         return;
       }
@@ -130,6 +130,7 @@ function Reservation(){
   
     // selecting proper image for a facility
     const slctedFacData = facilities.find(facility => facility.facility_name === selectedFacility);
+    console.log(slctedFacData);
 
     return(
     
@@ -155,7 +156,7 @@ function Reservation(){
                     <p><img src={'/calendar.png'} alt={'calendar icon'} />{slctedFacData.available_days}</p>
                     <p><img src={'/location.png'} alt={'location icon'} />{slctedFacData.location}</p>
                     <p><img src={'/people.png'} alt={'people icon'} />{slctedFacData.min_capacity}-{slctedFacData.max_capacity}</p>
-                    <p><img src={'/exclamation.png'} alt={'availiablity icon'} />{slctedFacData.suny_flag ? 'Only available for SUNY' : 'Available to All'}</p>
+                    <p><img src={'/exclamation.png'} alt={'availiablity icon'} />{slctedFacData.suny_flag === 'True' ? 'Only available for SUNY' : 'Available to All'}</p>
 
                 </div>
             </div>

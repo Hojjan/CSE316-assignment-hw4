@@ -20,15 +20,30 @@ function Signup(){
     }, []);
 
     const handleSignup = () => {
-        // 비밀번호 확인
+        if (!email) {
+            alert("Email is not entered.");
+            return;
+        }
+
+        if (!password || !checkpw) {
+            alert("Password or confirm password is not entered.");
+            return;
+        }
+        
+        if (!username) {
+            alert("Username is not entered.");
+            return;
+        }
+
         if (password !== checkpw) {
-            alert("Confim password is not the same with password.");
+            alert("Confirm password is not the same with password.");
             return;
         }
 
         // 비밀번호 해싱
         const hashedPassword = hashutil(email, password);
-        const newAccount = {email: email, password: hashedPassword, username: username}
+        const action = "signup"
+        const newAccount = {action, email: email, password: hashedPassword, username: username}
 
         // 서버로 데이터 전송
         axios.post('http://localhost:3001/api/user', newAccount)
@@ -49,7 +64,7 @@ function Signup(){
                 }
             });
 
-        };
+    };
 
     return(
         <div className="wholeSignUp">
