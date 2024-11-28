@@ -1,8 +1,11 @@
 const express = require('express');
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const cors = require('cors');
 const mysql = require('mysql2');
 const app = express();
 const port = 3001;
+const jwt = require("jsonwebtoken");
 
 
 // CORS 설정 (React에서 요청을 허용하기 위함)
@@ -10,11 +13,20 @@ app.use(cors());
 
 app.use(express.json());
 
+cloudinary.config({
+  cloud_name: "dgou2evcb",
+  api_key: "872698482192992",
+  api_secret: "8R05iBI5XgJ4xE2lvXVPWDpVdfw",
+});
+
+const upload = multer({ dest: "uploads/" });
+
 // MySQL 연결 설정
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'hochan2001!', // 실제 비밀번호로 변경
+  database: 'cse316hw'
 });
 
 db.connect((err) => {
@@ -23,102 +35,42 @@ db.connect((err) => {
   } else {
     console.log('Connected to MySQL');
   }
-
-  const createDatabaseQuery = `CREATE DATABASE IF NOT EXISTS cse316hw`;
-  db.query(createDatabaseQuery, (err) => {
-    if (err) {
-      console.error('Error creating database:', err);
-    } else {
-      console.log('Database created or already exists');
-
-      // 데이터베이스 선택
-      db.changeUser({ database: 'cse316hw' }, (err) => {
-        if (err) {
-          console.error('Error switching to database:', err);
-        } else {
-          console.log('Using database cse316hw');
-
-          // 필요한 테이블 생성 (예시)
-          const createFacilitiesTableQuery = `
-            CREATE TABLE IF NOT EXISTS facilities (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              facility_name VARCHAR(45) NOT NULL,
-              facility_desc VARCHAR(45) NOT NULL,
-              img_src VARCHAR(225) NOT NULL,
-              available_days VARCHAR(45) NOT NULL,
-              min_capacity VARCHAR(45) NOT NULL,
-              max_capacity VARCHAR(45) NOT NULL,
-              location VARCHAR(45) NOT NULL,
-              suny_flag VARCHAR(45) NOT NULL
-            );`;
-          
-          const createReservationTableQuery = `
-            CREATE TABLE IF NOT EXISTS reservation (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              reservation_date VARCHAR(45) NOT NULL,
-              user_number VARCHAR(45) NOT NULL,
-              is_suny VARCHAR(45) NOT NULL,
-              purpose VARCHAR(45),
-              reservation_name VARCHAR(45) NOT NULL,
-              user_name VARCHAR(45) NOT NULL,
-              location VARCHAR(45),
-              image_src VARCHAR(255)
-            );`;
-
-            const createUserTableQuery =`
-            CREATE TABLE IF NOT EXISTS user (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              email_address VARCHAR(255) UNIQUE NOT NULL,
-              password VARCHAR(255) NOT NULL,
-              username VARCHAR(255) NOT NULL
-            );`;
-
-            db.query(createFacilitiesTableQuery, (err) => {
-              if (err) {
-                console.error('Error creating facilities table:', err);
-              } else {
-                console.log('Facilities table updated');
-              }
-            });
-            
-            db.query(createReservationTableQuery, (err) => {
-              if (err) {
-                console.error('Error creating reservation table:', err);
-              } else {
-                console.log('Reservation table updated');
-              }
-            });
-            
-            db.query(createUserTableQuery, (err) => {
-              if (err) {
-                console.error('Error creating user table:', err);
-              } else {
-                console.log('User table updated');
-              }
-            });
-              
-            const insertFacilityDataQuery = `
-            INSERT INTO facilities (facility_name, facility_desc, img_src, available_days, min_capacity, max_capacity, location, suny_flag)
-            VALUES
-              ('Gym', 'A place used for physical activity', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/gym_s7esxc.jpg', 'Mon, Tue, Wed, Thu, Fri, Sat, Sun', '1', '5','A101', 'False'),
-              ('Auditorium', 'A place for large events', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/auditorium_v8gbsn.jpg', 'Mon, Tue, Wed, Thu', '10', '40','A234', 'False'),
-              ('Swimming Pool', 'A place for physical activity', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/pool_k7jri5.jpg', 'Sat, Sun', '1', '8','B403', 'False'),
-              ('Seminar Room', 'A place for large meetings', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/seminar_biuopm.jpg', 'Mon, Wed, Fri', '10', '30','B253', 'False'),
-              ('Conference Room', 'A place for small but important meetings', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/conference_ghcqca.jpg', 'Mon, Tue, Wed, Thu, Fri', '1', '10', 'C1033', 'True'),
-              ('Library', 'A quiet place', 'https://res.cloudinary.com/dgou2evcb/image/upload/v1731084023/library_e2kkdf.jpg', 'Mon, Tue, Wed, Thu, Fri, Sat, Sun', '1', '20', 'A1011', 'True');
-              `;
-              db.query(insertFacilityDataQuery, (err, result) => {
-                if (err) {
-                  console.error('Error inserting data into facilities table:', err);
-                } else {
-                  console.log('Data inserted into facilities table:', result);
-                }
-              });
-        }
-      });
-    }
-  });
 }); 
+
+app.post("/api/user/uploadProfileImage", upload.single("image"), async (req, res) => {
+  const { userId } = req.body; // 클라이언트에서 전송된 userId
+  const file = req.file;
+
+  if (!file || !userId) {
+      return res.status(400).json({ error: "Missing file or userId" });
+  }
+
+  try {
+      // Cloudinary에 이미지 업로드
+      const result = await cloudinary.uploader.upload(file.path, {
+          folder: "user_profile_images",
+      });
+
+      const imageUrl = result.secure_url;
+
+      // MySQL에 URL 업데이트
+      const updateQuery = "UPDATE user SET img_src = ? WHERE id = ?";
+      db.query(updateQuery, [imageUrl, userId], (err, results) => {
+          if (err) {
+              console.error("Error updating user image in database:", err);
+              return res.status(500).json({ error: "Database error during image update" });
+          }
+
+          res.status(200).json({
+              message: "Profile image uploaded and saved successfully!",
+              imageUrl,
+          });
+      });
+  } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+  }
+});
 
 
 // 데이터 조회 API for cse316hw schema의 facilities table
@@ -144,10 +96,35 @@ app.get('/api/reservation', (req, res) => {
   });
 });
 
+app.post("/api/user/updatePassword", async (req, res) => {
+  const { userId, hashedPassword } = req.body;
+
+  if (!userId || !hashedPassword) {
+      return res.status(400).json({ error: "User ID and new password are required." });
+  }
+
+  try {
+      //const hashedPassword = hashutil("your-salt", newPassword); // 비밀번호 해싱
+      const query = "UPDATE user SET password = ? WHERE id = ?";
+      db.query(query, [hashedPassword, userId], (err, result) => {
+          if (err) {
+              console.error("Error updating password:", err);
+              return res.status(500).json({ error: "Failed to update password." });
+          }
+
+          res.status(200).json({ message: "Password updated successfully!" });
+      });
+  } catch (error) {
+      console.error("Error:", error);
+      res.status(500).json({ error: "Server error." });
+  }
+});
+
+
 // 데이터 전송 for cse316hw schema의 reservation table
 app.post('/api/reservation', (req, res) => {
-  const { facility, date, numPeople, suny, purpose, src, location } = req.body;
-  const user = "Hochan Jun";
+  const { facility, date, numPeople, suny, purpose, src, location, user } = req.body;
+  //const user = "Hochan Jun"
   db.beginTransaction((err) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to start transaction' });
@@ -221,6 +198,9 @@ app.delete('/api/reservation/:id', (req, res) => {
   });
 });
 
+
+const SECRET_KEY = "hochan2001";
+
 // 회원가입 처리
 app.post("/api/user", (req, res) => {
   console.log("Request body: ", req.body);
@@ -246,8 +226,10 @@ app.post("/api/user", (req, res) => {
         if (err) {
           return res.status(500).json({ error: "Database error during user insertion." });
         }
+        const userId = results.insertId;
+        const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn: "1h" });
 
-        res.status(201).json({ message: "User registered successfully!" });
+        res.status(201).json({ message: "User registered successfully!" , token,});
       });
     });
   }
@@ -265,18 +247,42 @@ app.post("/api/user", (req, res) => {
 
       // 비밀번호 검증
       const user = results[0]; // DB에서 가져온 사용자 정보
-      console.log("user password: ", user.password);
-      console.log("password: ", password);
       if (password !== user.password) {
         return res.status(401).json({ error: "Wrong password." });
       }
-      res.status(200).json({ message: "Sign in successful!" });
+
+      const token = jwt.sign({ id: user.id, email }, SECRET_KEY, { expiresIn: "10s" });
+
+      res.status(200).json({ message: "Sign in successful!", userId: user.id, token, });
     });
   }
   else {
     res.status(400).json({ error: "Invalid action." });
   }
 });
+
+app.get("/api/user/profile", (req, res) => {
+  const userId = req.query.userId;
+
+  if (!userId) {
+      return res.status(400).json({ error: "Missing userId" });
+  }
+
+  const query = "SELECT email_address, password, username, img_src FROM user WHERE id = ?";
+  db.query(query, [userId], (err, results) => {
+      if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Failed to fetch profile image" });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+      }
+      const account = results[0];
+      res.status(200).json({ email_address: account.email_address, password: account.password, username: account.username, img_src: account.img_src});
+  });
+});
+
 
 // 서버 시작
 app.listen(port, () => {

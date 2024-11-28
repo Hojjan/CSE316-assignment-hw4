@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import '../cssPages/reservationHistory.css'
 import axios from "axios";
 
-function ReservationList() {
+function ReservationHistory() {
     const [reservations, setReservations] = useState([]);
 
     useEffect(() => {
@@ -68,4 +68,4 @@ function ReservationList() {
     );
 }
 
-export default ReservationList;
+export default ReservationHistory;

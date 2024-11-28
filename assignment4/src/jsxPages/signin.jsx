@@ -34,9 +34,11 @@ function Signin(){
         const newAccount = {action, email: email, password: hashedPassword};
         axios.post('http://localhost:3001/api/user', newAccount)
             .then((response) => {
-                const { message } = response.data;
+                const { message, userId, token } = response.data;
                 alert(message);
                 if (response.status === 200) { // 상태 코드가 200인지 확인
+                    localStorage.setItem("userId", userId);
+                    localStorage.setItem('authToken', token);
                     window.location.href = '/homepage'; // 홈 페이지로 리다이렉트
                 }
             })

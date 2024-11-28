@@ -30,12 +30,24 @@ function Reservation(){
     const [suny, setSuny] = useState('SUNY');
     const [purpose, setPurpose] = useState('');
     const [facilities, setFacilities] = useState([]);
+    const [username, setUsername] = useState('');
 
-  useEffect(() => {
-    axios.get('http://localhost:3001/api/facilities')
-      .then((response) => {setFacilities(response.data); })
-      .catch((error) => {console.error('Error fetching facility data:', error);});
-  }, []);
+    useEffect(() => {
+      axios.get('http://localhost:3001/api/facilities')
+        .then((response) => {setFacilities(response.data); })
+        .catch((error) => {console.error('Error fetching facility data:', error);});
+    }, []);
+    
+    useEffect(() => {
+      const userId = localStorage.getItem("userId");
+      axios.get(`http://localhost:3001/api/user?userId=${userId}`)
+          .then((response) => {
+              setUsername(response.data.username); // 서버에서 가져온 username 저장
+          })
+          .catch((error) => {
+              console.error('Error fetching username:', error);
+          });
+    }, []);
 
     const handleFacilityChange = (event) => {
       setSelectedFacility(event.target.value);
@@ -115,7 +127,7 @@ function Reservation(){
 
 
 
-      const newReservation = { facility: selectedFacility, date, numPeople, suny, purpose, src, location};
+      const newReservation = { facility: selectedFacility, date, numPeople, suny, purpose, src, location, username};
 
 
       // data posting in the DB

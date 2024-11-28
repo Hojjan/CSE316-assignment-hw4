@@ -2,6 +2,8 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import '../cssPages/App.css'
 
+
+import { ProfileProvider } from './profileContext';
 import Navbar from './navbar';
 import Home from './homepage';
 import FacilityList from "./facilityList";
@@ -11,25 +13,29 @@ import ReservationHistory from './reservationHistory';
 import Signin from './signin';
 import Signup from './signup';
 
+import ProtectedRoute from './ProtectedRoute';
+
 function App() {
   return (
-    <Router>
-      <Navbar />
-      {/* Used Route to apply navigation bar in every pages in common 
-      path value is for additional info on the right side of server address*/}
-      <Routes>
-        <Route path="/" element={<Navigate to="/homepage" replace />} /> 
-        <Route path="/homepage" element={<Home />} />
-        <Route path="/facilityList" element={<FacilityList />} />
-        <Route path="/reservation" element={<Reservation />} />
-        <Route path="/userInfo" element={<Userinfo />} />
-        <Route path="/reservationHistory" element={<ReservationHistory />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
-        
-      </Routes>
+    <ProfileProvider>
+      <Router>
+        <Navbar />
+        {/* Used Route to apply navigation bar in every pages in common 
+        path value is for additional info on the right side of server address*/}
+        <Routes>
+          <Route path="/" element={<Navigate to="/homepage" replace />} /> 
+          <Route path="/homepage" element={<Home />} />
+          <Route path="/facilityList" element={<FacilityList />} />
+          <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
+          <Route path="/userInfo" element={<ProtectedRoute><Userinfo /></ProtectedRoute>} />
+          <Route path="/reservationHistory" element={<ProtectedRoute><ReservationHistory /></ProtectedRoute>} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
+          
+        </Routes>
 
-    </Router>
+      </Router>
+    </ProfileProvider>
   );
 }
 

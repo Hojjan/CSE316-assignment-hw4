@@ -1,8 +1,32 @@
-import React from "react";
+import React, {useContext} from "react";
 import '../cssPages/navbar.css'
-import {Link} from "react-router-dom";
+import { ProfileContext } from "./profileContext";
+import { Link, useNavigate } from "react-router-dom";
 
-function Navbar({profileImage}){
+
+
+function Navbar(){
+  const { profileImage, setProfileImage, loading} = useContext(ProfileContext);
+  const navigate = useNavigate();
+
+  const isAuthenticated = () => !!localStorage.getItem("authToken");
+  if(!isAuthenticated()){
+    setProfileImage("./user.png");
+  }
+  const handleMenuClick = (path) => {
+    if (isAuthenticated()) {
+        navigate(path); // 로그인된 경우 해당 경로로 이동
+    } else {
+        alert("You must be logged in to access this page.");
+        navigate("/signin"); // 로그인 페이지로 이동
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("authToken"); // 로그아웃 처리
+    window.location.reload(); // 상태 초기화를 위해 페이지 새로고침
+    alert("Succesfully Signed out!");
+  };
 
   return(
     <nav>
@@ -24,23 +48,29 @@ function Navbar({profileImage}){
               <Link to="/facilityList"><p>Facility List</p></Link>
             </li>
             <li className="hideOnMobile">
-                <Link to="/reservation"><p>Reservation</p></Link>
+              <Link to="/reservation" onClick={() => handleMenuClick('/reservation')}><p>Reservation</p></Link>
             </li>
             <li className="hideOnMobile">
-                <Link to="#" className="user">
-                  <p>User</p>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-                      <path d="M480-360 280-560h400L480-360Z" />
-                    </svg>
-                </Link>
-                <ul className="dropdown-content">
-                  <Link to="/userInfo">My Information</Link>
-                  <Link to="/reservationHistory">Reservation History</Link>
-                </ul>
+              <Link to="#" className="user">
+                <p>User</p>
+                  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                    <path d="M480-360 280-560h400L480-360Z" />
+                  </svg>
+              </Link>
+              <ul className="dropdown-content">
+                <Link to="/userInfo" onClick={() => handleMenuClick('/userInfo')}>My Information</Link>
+                <Link to="/reservationHistory" onClick={() => handleMenuClick('/reservationHistory')}>Reservation History</Link>
+              </ul>
             </li>
             
             <li className="hideOnMobile">
-              <Link to="/signin"><p>Sign in</p></Link>
+            {isAuthenticated() ? (
+              <Link to="#" onClick={() => handleSignOut()}><p>Sign out</p></Link>
+              ) : (
+              <Link to="/signin">
+                  <p>Sign in</p>
+              </Link>
+              )}
             </li>
           </div>
 
@@ -57,10 +87,16 @@ function Navbar({profileImage}){
 
           
           <li className="signin-nav hideOnMobile">
-            <img src={profileImage} alt="Profile" className="navbar-profile-image" />
-            <Link to = "signin">
-              <button className="signin">Sign in</button>
-            </Link>
+            {!loading && (
+                        <img src={profileImage} alt="Profile" className="navbar-profile-image" />
+                    )}
+            {isAuthenticated() ? (
+              <button className="signin" onClick={() => handleSignOut()}>Sign out</button>
+              ) : (
+              <Link to="/signin">
+                  <button className="signin">Sign in</button>
+              </Link>
+              )}
           </li> 
         </ul>
 
@@ -70,7 +106,7 @@ function Navbar({profileImage}){
             <Link to="/facilityList">Facility List</Link>
           </li>
           <li>
-            <Link to="/reservation">Facility Reservation</Link>
+            <Link to="/reservation" onClick={() => handleMenuClick('/reservation')}>Facility Reservation</Link>
           </li>
           <li>
             <Link to="#">
@@ -78,8 +114,8 @@ function Navbar({profileImage}){
               <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-360 280-560h400L480-360Z" /></svg>
             </Link>
             <ul className="dropdown-content">
-              <Link to="/userInfo">My Information</Link>
-              <Link to="/reservationHistory">Reservation History</Link>
+              <Link to="/userInfo" onClick={() => handleMenuClick('/userInfo')}>My Information</Link>
+              <Link to="/reservationHistory" onClick={() => handleMenuClick('/reservationHistory')}>Reservation History</Link>
             </ul>
           </li>
         </ul>
