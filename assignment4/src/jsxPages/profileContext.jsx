@@ -54,11 +54,9 @@ export const ProfileProvider = ({ children }) => {
             });
 
             if (response.status === 403) {
-                // Access Token 만료 시 Refresh
                 console.log("Access Token expired, attempting to refresh...");
                 accessToken = await refreshAccessToken();
                 if (accessToken) {
-                    // Refresh 후 재시도
                     const retryResponse = await fetch(`http://localhost:3001/api/user/profile?userId=${userId}`, {
                         headers: {
                             Authorization: `Bearer ${accessToken}`,

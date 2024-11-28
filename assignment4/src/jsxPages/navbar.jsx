@@ -17,16 +17,16 @@ function Navbar(){
   }, []);
   const handleMenuClick = (path) => {
     if (isAuthenticated()) {
-        navigate(path); // 로그인된 경우 해당 경로로 이동
+        navigate(path); 
     } else {
         alert("You must be logged in to access this page.");
-        navigate("/signin"); // 로그인 페이지로 이동
+        navigate("/signin");
     }
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem("accessToken"); // 로그아웃 처리
-    window.location.reload(); // 상태 초기화를 위해 페이지 새로고침
+    localStorage.removeItem("accessToken"); 
+    window.location.reload(); 
     alert("Succesfully Signed out!");
   };
 

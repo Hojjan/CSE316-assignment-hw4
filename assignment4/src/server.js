@@ -10,7 +10,6 @@ const jwt = require("jsonwebtoken"); //Authentication
 
 
 
-// CORS 설정 (React에서 요청을 허용하기 위함)
 app.use(cors());
 
 app.use(express.json());
@@ -25,11 +24,11 @@ cloudinary.config({
 
 const upload = multer({ dest: "uploads/" });
 
-// MySQL 연결 설정
+
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'hochan2001!', // 실제 비밀번호로 변경
+  password: 'hochan2001!', 
   database: 'cse316hw'
 });
 
@@ -42,7 +41,7 @@ db.connect((err) => {
 }); 
 
 app.post("/api/user/uploadProfileImage", authenticateToken, upload.single("image"), async (req, res) => {
-  const { userId } = req.body; // 클라이언트에서 전송된 userId
+  const { userId } = req.body;
   const file = req.file;
 
   if (!file || !userId) {
@@ -50,14 +49,14 @@ app.post("/api/user/uploadProfileImage", authenticateToken, upload.single("image
   }
 
   try {
-      // Cloudinary에 이미지 업로드
+     
       const result = await cloudinary.uploader.upload(file.path, {
           folder: "user_profile_images",
       });
 
       const imageUrl = result.secure_url;
 
-      // MySQL에 URL 업데이트
+     
       const updateQuery = "UPDATE user SET img_src = ? WHERE id = ?";
       db.query(updateQuery, [imageUrl, userId], (err, results) => {
           if (err) {
@@ -77,7 +76,7 @@ app.post("/api/user/uploadProfileImage", authenticateToken, upload.single("image
 });
 
 
-// 데이터 조회 API for cse316hw schema의 facilities table
+
 app.get('/api/facilities', (req, res) => {
   const query = 'SELECT * FROM cse316hw.facilities';
   db.query(query, (err, results) => {
@@ -87,7 +86,7 @@ app.get('/api/facilities', (req, res) => {
 });
 
 
-// 데이터 조회 API for reservation table
+
 app.get('/api/reservation', authenticateToken, (req, res) => {
   const query = 'SELECT * FROM cse316hw.reservation';
 
@@ -109,7 +108,7 @@ app.post("/api/user/updatePassword", authenticateToken, async (req, res) => {
   }
 
   try {
-      //const hashedPassword = hashutil("your-salt", newPassword); // 비밀번호 해싱
+      
       const query = "UPDATE user SET password = ? WHERE id = ?";
       db.query(query, [hashedPassword, userId], (err, result) => {
           if (err) {
@@ -126,10 +125,10 @@ app.post("/api/user/updatePassword", authenticateToken, async (req, res) => {
 });
 
 
-// 데이터 전송 for cse316hw schema의 reservation table
+
 app.post('/api/reservation', authenticateToken, (req, res) => {
   const { facility, date, numPeople, suny, purpose, src, location, username } = req.body;
-  //const user = "Hochan Jun"
+
   db.beginTransaction((err) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to start transaction' });
@@ -143,13 +142,11 @@ app.post('/api/reservation', authenticateToken, (req, res) => {
     
     db.query(query, [date, numPeople, suny, purpose, facility, username, location, src], (err, result) => {
       if (err) {
-        // 오류 발생 시 트랜잭션 롤백
         return db.rollback(() => {
           res.status(500).json({ error: 'Failed to save reservation', details: err.message });
         });
       }
 
-      // 성공 시 커밋
       db.commit((err) => {
         if (err) {
           return db.rollback(() => {
@@ -183,20 +180,18 @@ app.delete('/api/reservation/:id', authenticateToken, (req, res) => {
       }
       
       if (result.affectedRows === 0) {
-        // 삭제할 레코드가 없는 경우 롤백 및 404 응답
         return db.rollback(() => {
           res.status(404).json({ message: 'No reservation found with the given ID' });
         });
       }
 
-      // 성공적으로 삭제되었을 경우 커밋
       db.commit((err) => {
         if (err) {
           return db.rollback(() => {
             res.status(500).json({ error: 'Failed to commit transaction' });
           });
         }
-        console.log(`Deleted reservation with ID: ${reservationId}`); // 삭제 확인 로그
+        console.log(`Deleted reservation with ID: ${reservationId}`); 
         res.status(200).json({ message: 'Reservation deleted successfully' });
       });
     });
@@ -205,7 +200,7 @@ app.delete('/api/reservation/:id', authenticateToken, (req, res) => {
 
 
 
-// 회원가입 처리
+
 app.post("/api/user/signup", (req, res) => {
   console.log("Request body: ", req.body);
 
@@ -215,7 +210,6 @@ app.post("/api/user/signup", (req, res) => {
   console.log("Password:", password);
   console.log("Username:", username);
 
-  // 이메일 중복 확인
   
   db.query(checkEmailQuery, [email], (err, results) => {
     if (err) {
@@ -226,7 +220,7 @@ app.post("/api/user/signup", (req, res) => {
       return res.status(400).json({ error: "Email already exists." });
     }
 
-    // 사용자 추가
+
     const insertUserQuery = "INSERT INTO cse316hw.user (email_address, password, username) VALUES (?, ?, ?)";
     db.query(insertUserQuery, [email, password, username], (err, results) => {
       if (err) {
@@ -250,13 +244,13 @@ app.post("/api/user/signin", (req, res) => {
           return res.status(500).json({ error: "Internal server error." });
       }
 
-      // 이메일이 존재하지 않는 경우
+
       if (results.length === 0) {
           return res.status(404).json({ error: "Wrong email." });
       }
 
-      // 비밀번호 검증
-      const user = results[0]; // DB에서 가져온 사용자 정보
+
+      const user = results[0]; 
       if (password !== user.password) {
         return res.status(401).json({ error: "Wrong password." });
       }
@@ -318,14 +312,14 @@ app.get("/api/user/profile", authenticateToken, (req, res) => {
 app.post('/api/token/refresh', (req, res) => {
   const refreshToken = req.body.token;
 
-  if (refreshToken == null) {return res.sendStatus(401);} // Refresh Token이 없는 경우
-  if (!refreshTokens.includes(refreshToken)) {return res.sendStatus(403);} // Refresh Token이 유효하지 않은 경우
+  if (refreshToken == null) {return res.sendStatus(401);} 
+  if (!refreshTokens.includes(refreshToken)) {return res.sendStatus(403);} 
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-      if (err) {return res.sendStatus(403);} // Refresh Token 검증 실패
+      if (err) {return res.sendStatus(403);} 
 
-      const accessToken = genAccTok({ id: user.id, email: user.email }); // 새로운 Access Token 생성
-      return res.status(200).json({ accessToken: accessToken }); // 새로운 Access Token 반환
+      const accessToken = genAccTok({ id: user.id, email: user.email });
+      return res.status(200).json({ accessToken: accessToken }); 
   });
 });
 
@@ -352,7 +346,6 @@ function genRefTok(user){
 }
 
 
-// 서버 시작
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

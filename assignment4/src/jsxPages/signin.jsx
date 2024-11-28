@@ -9,10 +9,8 @@ function Signin(){
     const [password, setPassword] = useState('');
 
     React.useEffect(() => {
-        // 페이지에 들어올 때 배경 변경
         document.body.classList.add('page-white-bg');
         return () => {
-            // 페이지를 떠날 때 원래 배경 복원
             document.body.classList.remove('page-white-bg');
         };
     }, []);
@@ -37,17 +35,16 @@ function Signin(){
             .then((response) => {
                 const { message, userId, accessToken, refreshToken } = response.data;
                 alert(message);
-                if (response.status === 200) { // 상태 코드가 200인지 확인
+                if (response.status === 200) { //If there is an error, sign out the account and limit the access
                     localStorage.setItem("userId", userId);
                     localStorage.setItem('accessToken', accessToken);
                     localStorage.setItem('refreshToken', refreshToken);
-
-                    window.location.href = '/homepage'; // 홈 페이지로 리다이렉트
+                    window.location.href = '/homepage'; // redirect to homepage
                 }
             })
             .catch((error) => {
                 if (error.response) {
-                    alert(error.response.data.error); // 서버에서 받은 오류 메시지 표시
+                    alert(error.response.data.error);
                 } else {
                     alert("An error occurred. Please try again.");
                 }

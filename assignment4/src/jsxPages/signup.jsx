@@ -11,10 +11,8 @@ function Signup(){
     const [username, setUsername] = useState('');
 
     React.useEffect(() => {
-        // 페이지에 들어올 때 배경 변경
         document.body.classList.add('page-white-bg');
         return () => {
-            // 페이지를 떠날 때 원래 배경 복원
             document.body.classList.remove('page-white-bg');
         };
     }, []);
@@ -40,11 +38,9 @@ function Signup(){
             return;
         }
 
-        // 비밀번호 해싱
         const hashedPassword = hashutil(email, password);
         const newAccount = {email: email, password: hashedPassword, username: username}
 
-        // 서버로 데이터 전송
         axios.post('http://localhost:3001/api/user/signup', newAccount)
             .then((response) => {
                 const {message} = response.data;

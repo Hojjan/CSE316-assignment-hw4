@@ -17,10 +17,8 @@ function Userinfo(){
     const [uploadedFile, setUploadedFile] = useState(null);
 
     React.useEffect(() => {
-        // 페이지에 들어올 때 배경 변경
         document.body.classList.add('page-white-bg');
         return () => {
-            // 페이지를 떠날 때 원래 배경 복원
             document.body.classList.remove('page-white-bg');
         };
     }, []);
@@ -88,7 +86,7 @@ function Userinfo(){
                 setUsername(data.username);
 
                 if (data.img_src && data.img_src !== "") {
-                    setProfileImage(data.img_src); // 서버에서 프로필 이미지 URL 설정
+                    setProfileImage(data.img_src); 
                 }
                 else{
                     setProfileImage("./user.png");
@@ -197,9 +195,9 @@ function Userinfo(){
             const result = await response.json();
     
             if (response.ok) {
-                setPassword(newPasswordInput); // 새로운 비밀번호로 상태 업데이트
+                setPassword(newPasswordInput); 
                 alert("Password updated successfully!");
-                closePopup(); // 팝업 닫기
+                closePopup(); 
             } else {
                 alert(result.error || "Failed to update password.");
             }
@@ -243,7 +241,7 @@ function Userinfo(){
                 const result = await response.json();
 
                 if (response.ok) {
-                    setProfileImage(result.imageUrl); // 프로필 이미지 업데이트
+                    setProfileImage(result.imageUrl); 
                     alert("Image uploaded and saved successfully!");
                 } else {
                     alert(result.error || "Image upload failed");
