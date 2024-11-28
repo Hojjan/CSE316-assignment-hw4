@@ -339,7 +339,7 @@ function authenticateToken(req, res, next){
 }
 
 function genAccTok(user){
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10s'});
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '15m'});
 }
 function genRefTok(user){
   return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
