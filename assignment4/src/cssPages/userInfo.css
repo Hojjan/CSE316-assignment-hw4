@@ -60,13 +60,15 @@
     top: 20%;
     left: 33%;
     width: 500px;
-    height: 315px;
     background-color: white;
     border: 1px solid #ccc;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     z-index: 1000;
     border-radius: 5px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
+
 
 .image-popup{
     width: 500px;

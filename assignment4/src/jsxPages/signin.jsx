@@ -61,7 +61,7 @@ function Signin(){
                 </div> 
                 <div className="password-container">
                     <p>Password</p>
-                    <input type="text" className="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
+                    <input type="password" className="password" value={password} onChange={(e) => setPassword(e.target.value)}/>
                 </div>
             </div>
             <div className="signButtons">

@@ -207,6 +207,63 @@ function Userinfo(){
     
     }
 
+    const handleNameChange = async () => {
+        const newNameInput = document.getElementById("newName").value;
+    
+        if (!newNameInput) {
+            alert("Please enter a new name.");
+            return;
+        }
+    
+        const userId = localStorage.getItem("userId");
+        let accessToken = localStorage.getItem("accessToken");
+        console.log(userId, newNameInput);
+    
+        try {
+            let response = await fetch("http://localhost:3001/api/user/updateName", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    newusername: newNameInput,
+                }),
+            });
+    
+            if (response.status === 403) {
+                accessToken = await refreshAccessToken();
+                
+                response = await fetch("http://localhost:3001/api/user/updateName", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        newusername: newNameInput,
+                    }),
+                });
+                
+            }
+            console.log(response);
+    
+    
+            if (response.status === 200) {
+                setUsername(newNameInput); // 상태 업데이트
+                alert("Name updated successfully!");
+                closePopup(); // 팝업 닫기
+            } else {
+                alert(response.error || "Failed to update name.");
+            }
+        } catch (error) {
+            alert("An error occurred while updating the name.");
+        }
+    };
+    
+
     const handleImageUpload = async () => {
         const userId = localStorage.getItem("userId");
         let accessToken = localStorage.getItem("accessToken");
@@ -299,33 +356,43 @@ function Userinfo(){
                     <div className={`popup ${activeButton === "image" ? "image-popup" : ""}`}>
                         <div className="popup-inner">
                             <h3>{popTitle}</h3>
-                            
-                            {activeButton === "image" ? (
-                            <>
-                                <div className="popup-content">
-                                    {popContent}
-                                    <button id="uploadBtn"  onClick={handleImageUpload}>Upload Image</button>
-                                </div>
-                                <div className="popUpButtons">
-                                    <button id="closeBtn"  onClick={closePopup}>Close</button>
-                                </div>
-                            </>
-                            ) : (
-                            <>
-                                <div className="popup-content">
-                                    {popContent}
-                                </div>
-                                <div className="popUpButtons">
-                                    <button id="closeBtn"  onClick={closePopup}>Close</button>
-                                    <button id="saveBtn"  onClick={handlePasswordVerify}>Save changes</button>
-                                </div>
-                            </>
-                            )}
 
+                            {activeButton === "image" ? (
+                                <>
+                                    <div className="popup-content">
+                                        {popContent}
+                                        <button id="uploadBtn" onClick={handleImageUpload}>Upload Image</button>
+                                    </div>
+                                    <div className="popUpButtons">
+                                        <button id="closeBtn" onClick={closePopup}>Close</button>
+                                    </div>
+                                </>
+                            ) : activeButton === "name" ? (
+                                <>
+                                    <div className="popup-content">
+                                        {popContent}
+                                    </div>
+                                    <div className="popUpButtons">
+                                        <button id="closeBtn" onClick={closePopup}>Close</button>
+                                        <button id="saveBtn" onClick={handleNameChange}>Save changes</button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="popup-content">
+                                        {popContent}
+                                    </div>
+                                    <div className="popUpButtons">
+                                        <button id="closeBtn" onClick={closePopup}>Close</button>
+                                        <button id="saveBtn" onClick={handlePasswordVerify}>Save changes</button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
+
         </div>
     );
 }

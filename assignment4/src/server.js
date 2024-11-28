@@ -124,6 +124,32 @@ app.post("/api/user/updatePassword", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/api/user/updateName", authenticateToken, async (req, res) => {
+  const { userId, newusername } = req.body;
+  console.log(userId, newusername);
+
+  if (!userId || !newusername) {
+      return res.status(400).json({ error: "User ID and username are required." });
+  }
+
+  try {
+    const query = "UPDATE user SET username = ? WHERE id = ?";
+    db.query(query, [newusername, userId], (err, result) => {
+      if (err) {
+        console.error("Error updating name:", err);
+        return res.status(500).send("Error updating name.");
+      }
+      else{
+        return res.status(200).send("successfully changed name!");
+      }
+    });
+  
+  } catch (error) {
+      console.error("Error updating name:", error);
+      res.status(500).json({ error: "Internal server error." });
+  }
+});
+
 
 
 app.post('/api/reservation', authenticateToken, (req, res) => {
