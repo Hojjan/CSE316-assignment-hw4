@@ -25,6 +25,33 @@ function Userinfo(){
         };
     }, []);
 
+
+    const refreshAccessToken = async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
+        try {
+            const response = await fetch("http://localhost:3001/api/token/refresh", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ token: refreshToken }),
+            });
+
+            if (!response.ok) throw new Error("Failed to refresh access token");
+            
+            const { accessToken } = await response.json();
+            localStorage.setItem("accessToken", accessToken);
+            return accessToken;
+        } catch (error) {
+            console.error("Error refreshing access token:", error);
+            alert("Session expired. Please log in again.");
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            window.location.href = "/signin";
+            return null;
+        }
+    };
+
     useEffect(() => {
         if (overlayRef.current) {
             overlayRef.current.style.display = pop ? 'block' : 'none';
@@ -33,23 +60,41 @@ function Userinfo(){
 
     useEffect(() => {
         const userId = localStorage.getItem("userId");
+        let accessToken = localStorage.getItem("accessToken");
 
-        if (userId) {
-            fetch(`http://localhost:3001/api/user/profile?userId=${userId}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    setEmail(data.email_address);
-                    setPassword(data.password);
-                    setUsername(data.username);
+        if (userId && accessToken) {
+            fetch(`http://localhost:3001/api/user/profile?userId=${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            })
+            .then(async (response) => {
+                if (response.status === 403) {
+                    accessToken = await refreshAccessToken();
+                    if (accessToken) {
+                        return fetch(`http://localhost:3001/api/user/profile?userId=${userId}`, {
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`
+                            }
+                        });
+                    }
+                }
+                return response;
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                setEmail(data.email_address);
+                setPassword(data.password);
+                setUsername(data.username);
 
-                    if (data.img_src && data.img_src !== "") {
-                        setProfileImage(data.img_src); // 서버에서 프로필 이미지 URL 설정
-                    }
-                    else{
-                        setProfileImage("./user.png");
-                    }
-                })
-                .catch((error) => console.error("Error fetching profile image:", error));
+                if (data.img_src && data.img_src !== "") {
+                    setProfileImage(data.img_src); // 서버에서 프로필 이미지 URL 설정
+                }
+                else{
+                    setProfileImage("./user.png");
+                }
+            })
+            .catch((error) => console.error("Error fetching profile image:", error));
         }
     }, []);
 
@@ -110,6 +155,7 @@ function Userinfo(){
         }
 
         const userId = localStorage.getItem("userId");
+        let accessToken = localStorage.getItem("accessToken");
 
         if (!newPasswordInput) {
             alert("Please enter new password.");
@@ -118,17 +164,36 @@ function Userinfo(){
 
         try {
             const hashedNewPassword = hashutil(email, newPasswordInput);
-            const response = await fetch("http://localhost:3001/api/user/updatePassword", {
+
+            let response = await fetch("http://localhost:3001/api/user/updatePassword", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`
                 },
                 body: JSON.stringify({
                     userId: userId,
                     hashedPassword: hashedNewPassword,
                 }),
             });
-    
+            
+            if (response.status === 403) {
+                accessToken = await refreshAccessToken();
+                if (accessToken) {
+                    response = await fetch("http://localhost:3001/api/user/updatePassword", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({
+                            userId: userId,
+                            hashedPassword: hashedNewPassword,
+                        }),
+                    });
+                }
+            }
+
             const result = await response.json();
     
             if (response.ok) {
@@ -146,6 +211,7 @@ function Userinfo(){
 
     const handleImageUpload = async () => {
         const userId = localStorage.getItem("userId");
+        let accessToken = localStorage.getItem("accessToken");
 
         if (uploadedFile) {
             const formData = new FormData();
@@ -153,10 +219,26 @@ function Userinfo(){
             formData.append("userId", userId);
 
             try {
-                const response = await fetch("http://localhost:3001/api/user/uploadProfileImage", {
+                let response = await fetch("http://localhost:3001/api/user/uploadProfileImage", {
                     method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    },
                     body: formData,
                 });
+                
+                if (response.status === 403) {
+                    accessToken = await refreshAccessToken();
+                    if (accessToken) {
+                        response = await fetch("http://localhost:3001/api/user/uploadProfileImage", {
+                            method: "POST",
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`
+                            },
+                            body: formData,
+                        });
+                    }
+                }
 
                 const result = await response.json();
 

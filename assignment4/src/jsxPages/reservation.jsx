@@ -32,21 +32,76 @@ function Reservation(){
     const [facilities, setFacilities] = useState([]);
     const [username, setUsername] = useState('');
 
-    useEffect(() => {
-      axios.get('http://localhost:3001/api/facilities')
-        .then((response) => {setFacilities(response.data); })
-        .catch((error) => {console.error('Error fetching facility data:', error);});
-    }, []);
-    
-    useEffect(() => {
-      const userId = localStorage.getItem("userId");
-      axios.get(`http://localhost:3001/api/user?userId=${userId}`)
-          .then((response) => {
-              setUsername(response.data.username); // 서버에서 가져온 username 저장
-          })
-          .catch((error) => {
-              console.error('Error fetching username:', error);
+    const refreshAccessToken = async () => {
+      const refreshToken = localStorage.getItem("refreshToken");
+      //console.log("Attempting to refresh access token...");
+      try {
+          const response = await axios.post("http://localhost:3001/api/token/refresh", {
+              token: refreshToken,
           });
+
+          const { accessToken } = response.data;
+          localStorage.setItem("accessToken", accessToken);
+          console.log("Access token refreshed successfully:", accessToken);
+          return accessToken;
+      } catch (error) {
+          console.error("Error refreshing access token:", error);
+          alert("Session expired. Please log in again.");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          window.location.href = "/signin"; 
+          return null;
+      }
+    };
+
+    const fetchFacilities = async () => {
+      let accessToken = localStorage.getItem("accessToken");
+      try {
+        const response = await axios.get('http://localhost:3001/api/facilities', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setFacilities(response.data);
+      } catch (error) {
+        if (error.response?.status === 403) {
+          accessToken = await refreshAccessToken();
+          if (accessToken) {
+            const retryResponse = await axios.get('http://localhost:3001/api/facilities', {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            setFacilities(retryResponse.data);
+          }
+        } else {
+          console.error('Error fetching facility data:', error);
+        }
+      }
+    };
+    
+    const fetchUsername = async () => {
+      const userId = localStorage.getItem("userId");
+      let accessToken = localStorage.getItem("accessToken");
+      try {
+        const response = await axios.get(`http://localhost:3001/api/user?userId=${userId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setUsername(response.data.username);
+      } catch (error) {
+        if (error.response?.status === 401) {
+          accessToken = await refreshAccessToken();
+          if (accessToken) {
+            const retryResponse = await axios.get(`http://localhost:3001/api/user?userId=${userId}`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            setUsername(retryResponse.data.username);
+          }
+        } else {
+          console.error('Error fetching username:', error);
+        }
+      }
+    };
+
+    useEffect(() => {
+      fetchFacilities();
+      fetchUsername();
     }, []);
 
     const handleFacilityChange = (event) => {
@@ -55,9 +110,13 @@ function Reservation(){
 
     const handleSubmit = async(e) => {
       e.preventDefault();
-
+      const accessToken = localStorage.getItem("accessToken");
       // making 2 variables to check whether there are already reserved facilities
-      const response = await axios.get('http://localhost:3001/api/reservation');
+      const response = await axios.get('http://localhost:3001/api/reservation', {
+          headers: {
+              Authorization: `Bearer ${accessToken}`,
+          },
+      });
       const strdReserv = response.data;
 
 
@@ -127,17 +186,22 @@ function Reservation(){
 
 
 
-      const newReservation = { facility: selectedFacility, date, numPeople, suny, purpose, src, location, username};
+      const newReservation = { facility: selectedFacility, date, numPeople, suny, purpose, src, location, username,};
 
+      console.log('Reservation Data:', newReservation);
 
       // data posting in the DB
-      axios.post('http://localhost:3001/api/reservation', newReservation)
-      .then((response) => {
-        alert(response.data.message); // 'Reservation successful!' message alert
-      })
-      .catch((error) => {
+      try {
+        const response = await axios.post('http://localhost:3001/api/reservation', newReservation, {
+          headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+        });
+        alert(response.data.message); // 'Reservation successful!' 메시지
+    } catch (error) {
+        console.error('Error:', error.response.data); // 서버에서 반환된 오류 메시지 확인
         alert('Failed to save reservation. Please try again.');
-      });
+    }
     };
   
     // selecting proper image for a facility

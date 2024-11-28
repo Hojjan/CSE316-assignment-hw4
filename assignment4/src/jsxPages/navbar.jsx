@@ -1,4 +1,4 @@
-import React, {useContext} from "react";
+import React, {useContext, useEffect} from "react";
 import '../cssPages/navbar.css'
 import { ProfileContext } from "./profileContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -9,10 +9,12 @@ function Navbar(){
   const { profileImage, setProfileImage, loading} = useContext(ProfileContext);
   const navigate = useNavigate();
 
-  const isAuthenticated = () => !!localStorage.getItem("authToken");
-  if(!isAuthenticated()){
-    setProfileImage("./user.png");
-  }
+  const isAuthenticated = () => !!localStorage.getItem("accessToken");
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      setProfileImage("./user.png");
+    }
+  }, []);
   const handleMenuClick = (path) => {
     if (isAuthenticated()) {
         navigate(path); // 로그인된 경우 해당 경로로 이동
@@ -23,7 +25,7 @@ function Navbar(){
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem("authToken"); // 로그아웃 처리
+    localStorage.removeItem("accessToken"); // 로그아웃 처리
     window.location.reload(); // 상태 초기화를 위해 페이지 새로고침
     alert("Succesfully Signed out!");
   };

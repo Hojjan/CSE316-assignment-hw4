@@ -42,13 +42,13 @@ function Signup(){
 
         // 비밀번호 해싱
         const hashedPassword = hashutil(email, password);
-        const action = "signup"
-        const newAccount = {action, email: email, password: hashedPassword, username: username}
+        const newAccount = {email: email, password: hashedPassword, username: username}
 
         // 서버로 데이터 전송
-        axios.post('http://localhost:3001/api/user', newAccount)
+        axios.post('http://localhost:3001/api/user/signup', newAccount)
             .then((response) => {
-                alert("Account successfully created!");
+                const {message} = response.data;
+                alert(message);
                 setEmail("");
                 setPassword("");
                 setCheckpw("");

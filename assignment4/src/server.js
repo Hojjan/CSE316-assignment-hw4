@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '../.env' })
 const express = require('express');
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
@@ -5,13 +6,16 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const app = express();
 const port = 3001;
-const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken"); //Authentication
+
 
 
 // CORS 설정 (React에서 요청을 허용하기 위함)
 app.use(cors());
 
 app.use(express.json());
+
+let refreshTokens = []
 
 cloudinary.config({
   cloud_name: "dgou2evcb",
@@ -37,7 +41,7 @@ db.connect((err) => {
   }
 }); 
 
-app.post("/api/user/uploadProfileImage", upload.single("image"), async (req, res) => {
+app.post("/api/user/uploadProfileImage", authenticateToken, upload.single("image"), async (req, res) => {
   const { userId } = req.body; // 클라이언트에서 전송된 userId
   const file = req.file;
 
@@ -77,26 +81,27 @@ app.post("/api/user/uploadProfileImage", upload.single("image"), async (req, res
 app.get('/api/facilities', (req, res) => {
   const query = 'SELECT * FROM cse316hw.facilities';
   db.query(query, (err, results) => {
-    if (err) {res.status(500).json();} 
-    else {res.json(results);}
+    if (err) { return res.status(500).json({ error: "Failed to fetch facilities" });} 
+    else {return res.status(200).json(results);}
   });
 });
 
+
 // 데이터 조회 API for reservation table
-app.get('/api/reservation', (req, res) => {
+app.get('/api/reservation', authenticateToken, (req, res) => {
   const query = 'SELECT * FROM cse316hw.reservation';
 
   db.query(query, (err, results) => {
     if (err) {
       console.error('Error fetching reservation data:', err);
-      res.status(500).json({ error: 'Failed to retrieve reservations' });
-    } else {
-      res.status(200).json(results);
-    }
+      return res.status(500).json({ error: 'Failed to retrieve reservations' });
+    } 
+    return res.status(200).json(results);
+    
   });
 });
 
-app.post("/api/user/updatePassword", async (req, res) => {
+app.post("/api/user/updatePassword", authenticateToken, async (req, res) => {
   const { userId, hashedPassword } = req.body;
 
   if (!userId || !hashedPassword) {
@@ -122,8 +127,8 @@ app.post("/api/user/updatePassword", async (req, res) => {
 
 
 // 데이터 전송 for cse316hw schema의 reservation table
-app.post('/api/reservation', (req, res) => {
-  const { facility, date, numPeople, suny, purpose, src, location, user } = req.body;
+app.post('/api/reservation', authenticateToken, (req, res) => {
+  const { facility, date, numPeople, suny, purpose, src, location, username } = req.body;
   //const user = "Hochan Jun"
   db.beginTransaction((err) => {
     if (err) {
@@ -136,7 +141,7 @@ app.post('/api/reservation', (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
-    db.query(query, [date, numPeople, suny, purpose, facility, user, location, src], (err, result) => {
+    db.query(query, [date, numPeople, suny, purpose, facility, username, location, src], (err, result) => {
       if (err) {
         // 오류 발생 시 트랜잭션 롤백
         return db.rollback(() => {
@@ -158,7 +163,7 @@ app.post('/api/reservation', (req, res) => {
 
 });
 
-app.delete('/api/reservation/:id', (req, res) => {
+app.delete('/api/reservation/:id', authenticateToken, (req, res) => {
   const reservationId = req.params.id;
   
   db.beginTransaction((err) => {
@@ -199,41 +204,46 @@ app.delete('/api/reservation/:id', (req, res) => {
 });
 
 
-const SECRET_KEY = "hochan2001";
 
 // 회원가입 처리
-app.post("/api/user", (req, res) => {
+app.post("/api/user/signup", (req, res) => {
   console.log("Request body: ", req.body);
 
-  const { action, email, password, username } = req.body;
+  const {email, password, username } = req.body;
+  const checkEmailQuery = "SELECT * FROM user WHERE email_address = ?";
+  console.log("Email:", email);
+  console.log("Password:", password);
+  console.log("Username:", username);
+
+  // 이메일 중복 확인
+  
+  db.query(checkEmailQuery, [email], (err, results) => {
+    if (err) {
+      return res.status(500).json({ err: "Database error during email check." });
+    }
+
+    if (results.length > 0) {
+      return res.status(400).json({ error: "Email already exists." });
+    }
+
+    // 사용자 추가
+    const insertUserQuery = "INSERT INTO cse316hw.user (email_address, password, username) VALUES (?, ?, ?)";
+    db.query(insertUserQuery, [email, password, username], (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Database error during user insertion.", err });
+      }
+
+      return res.status(201).json({ message: "User registered successfully!"});
+    });
+  });
+});
+
+app.post("/api/user/signin", (req, res) => {
+  const {email, password} = req.body;
+
+  console.log("Signin request received with email:", email);
   const checkEmailQuery = "SELECT * FROM user WHERE email_address = ?";
 
-  if(action === "signup"){
-    // 이메일 중복 확인
-    
-    db.query(checkEmailQuery, [email], (err, results) => {
-      if (err) {
-        return res.status(500).json({ err: "Database error during email check." });
-      }
-
-      if (results.length > 0) {
-        return res.status(400).json({ error: "Email already exists." });
-      }
-
-      // 사용자 추가
-      const insertUserQuery = "INSERT INTO user (email_address, password, username) VALUES (?, ?, ?)";
-      db.query(insertUserQuery, [email, password, username], (err, results) => {
-        if (err) {
-          return res.status(500).json({ error: "Database error during user insertion." });
-        }
-        const userId = results.insertId;
-        const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn: "1h" });
-
-        res.status(201).json({ message: "User registered successfully!" , token,});
-      });
-    });
-  }
-  else if(action === "signin"){
     db.query(checkEmailQuery, [email], (err, results) => {
       if (err) {
           console.error("Database error:", err);
@@ -250,18 +260,40 @@ app.post("/api/user", (req, res) => {
       if (password !== user.password) {
         return res.status(401).json({ error: "Wrong password." });
       }
+      const acc = { id: user.id, email: email };
+      const accessToken = genAccTok(acc);
+      const refreshToken = genRefTok(acc);
+      refreshTokens.push(refreshToken);
 
-      const token = jwt.sign({ id: user.id, email }, SECRET_KEY, { expiresIn: "10s" });
+      res.status(200).json({ message: "Sign in successful!", userId: user.id, accessToken: accessToken, refreshToken: refreshToken });
 
-      res.status(200).json({ message: "Sign in successful!", userId: user.id, token, });
-    });
-  }
-  else {
-    res.status(400).json({ error: "Invalid action." });
-  }
+  });
 });
 
-app.get("/api/user/profile", (req, res) => {
+app.get('/api/user', authenticateToken, (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+      return res.status(400).json({ error: 'User ID is required.' });
+  }
+
+  const query = 'SELECT username FROM user WHERE id = ?';
+  db.query(query, [userId], (err, result) => {
+      if (err) {
+          console.error('Error fetching username:', err);
+          return res.status(500).json({ error: 'Failed to fetch username.' });
+      }
+
+      if (result.length === 0) {
+          return res.status(404).json({ error: 'User not found.' });
+      }
+
+      res.status(200).json({ username: result[0].username });
+  });
+});
+
+
+app.get("/api/user/profile", authenticateToken, (req, res) => {
   const userId = req.query.userId;
 
   if (!userId) {
@@ -279,9 +311,45 @@ app.get("/api/user/profile", (req, res) => {
           return res.status(404).json({ error: "User not found" });
       }
       const account = results[0];
-      res.status(200).json({ email_address: account.email_address, password: account.password, username: account.username, img_src: account.img_src});
+      return res.status(200).json({ email_address: account.email_address, password: account.password, username: account.username, img_src: account.img_src});
   });
 });
+
+app.post('/api/token/refresh', (req, res) => {
+  const refreshToken = req.body.token;
+
+  if (refreshToken == null) {return res.sendStatus(401);} // Refresh Token이 없는 경우
+  if (!refreshTokens.includes(refreshToken)) {return res.sendStatus(403);} // Refresh Token이 유효하지 않은 경우
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) {return res.sendStatus(403);} // Refresh Token 검증 실패
+
+      const accessToken = genAccTok({ id: user.id, email: user.email }); // 새로운 Access Token 생성
+      return res.status(200).json({ accessToken: accessToken }); // 새로운 Access Token 반환
+  });
+});
+
+
+function authenticateToken(req, res, next){
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+        return res.status(401).json({ error: "Access token is missing" });
+    }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) {return res.status(403).json({ error: "Invalid or expired token" });}
+    req.user = user;
+    next()
+  })
+}
+
+function genAccTok(user){
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10s'});
+}
+function genRefTok(user){
+  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
+}
 
 
 // 서버 시작

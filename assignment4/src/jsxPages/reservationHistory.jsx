@@ -5,24 +5,96 @@ import axios from "axios";
 function ReservationHistory() {
     const [reservations, setReservations] = useState([]);
 
-    useEffect(() => {
-        // Get the reservation history from DB server
-        axios.get('http://localhost:3001/api/reservation')
-            .then((response) => {setReservations(response.data);})
-            .catch((error) => {console.error('Error fetching reservation data:', error);});
+    const refreshAccessToken = async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
+        //console.log("Attempting to refresh access token...");
+        try {
+            const response = await axios.post("http://localhost:3001/api/token/refresh", {
+                token: refreshToken,
+            });
+
+            const { accessToken } = response.data;
+            localStorage.setItem("accessToken", accessToken);
+            console.log("Access token refreshed successfully:", accessToken);
+            return accessToken;
+        } catch (error) {
+            console.error("Error refreshing access token:", error);
+            alert("Session expired. Please log in again.");
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            window.location.href = "/signin"; // Redirect to login page
+            return null;
+        }
+    };
+
+    const fetchReservations = async () => {
+        let accessToken = localStorage.getItem("accessToken");
+
+        console.log("Fetching reservations with access token:", accessToken);
+
+        try {
+            const response = await axios.get("http://localhost:3001/api/reservation", {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+            console.log("Reservations fetched successfully:", response.data);
+            setReservations(response.data);
+        } catch (error) {
+            if (error.response?.status === 403) {
+                // If unauthorized, try refreshing the token
+                console.log("Access token expired or invalid. Refreshing token...");
+                accessToken = await refreshAccessToken();
+                if (accessToken) {
+                    // Retry the API request with the new token
+                    console.log("Retrying with new access token:", accessToken);
+                    const retryResponse = await axios.get("http://localhost:3001/api/reservation", {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+                    setReservations(retryResponse.data);
+                }
+            } else {
+                alert("Error fetching reservation data:", error);
+            }
+        }
+    };
+
+    useEffect(() => {   
+        fetchReservations();
     }, []);
     
 
-    const handleRemoveReservation = (id) => {
+    const handleRemoveReservation = async(id) => {
+        let accessToken = localStorage.getItem("accessToken");
         // Deleting the data which has particular id from DB
-        axios.delete(`http://localhost:3001/api/reservation/${id}`)
-            .then(() => {
-                // After deleting from DB, UI update
-                setReservations(reservations.filter(reservation => reservation.id !== id));
-            })
-            .catch((error) => {
-                console.error('Error deleting reservation:', error);
+        try {
+            // Deleting the data which has a particular id from DB
+            await axios.delete(`http://localhost:3001/api/reservation/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
             });
+            // After deleting from DB, update UI
+            setReservations(reservations.filter(reservation => reservation.id !== id));
+        } catch (error) {
+            console.error('Error deleting reservation:', error);
+            if (error.response?.status === 401) {
+                accessToken = await refreshAccessToken();
+                if (accessToken) {
+                    // Retry the delete request with the new token
+                    await axios.delete(`http://localhost:3001/api/reservation/${id}`, {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    });
+                    setReservations(reservations.filter((reservation) => reservation.id !== id));
+                }
+            } else {
+                console.error("Error deleting reservation:", error);
+            }
+        }
     };
 
     let content;

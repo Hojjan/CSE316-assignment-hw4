@@ -2,8 +2,9 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 function isAuthenticated() {
-    const token = localStorage.getItem('authToken');
-    return !!token; // 토큰이 존재하면 true, 없으면 false
+    const accesstoken = localStorage.getItem('accessToken');
+    const refreshtoken = localStorage.getItem('accessToken');
+    return !!accesstoken || !!refreshtoken; // 토큰이 존재하면 true, 없으면 false
 }
 
 function ProtectedRoute({ children }) {
